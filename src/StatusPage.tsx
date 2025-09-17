@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock3, Activity, ExternalLink, RefreshCcw } from "lucide-react";
 
 /**
@@ -443,7 +443,11 @@ export default function StatusPage({ endpoint = "/api/status" }: { endpoint?: st
       {/* Components */}
       <main className="mx-auto max-w-5xl px-4 pb-20 space-y-8">
         {error && <div className="text-amber-300 text-sm">{error}</div>}
-        {(groups.length ? groups : [["Services", enriched?.services ?? []]]).map(([group, services]) => (
+        {(() => {
+  const renderGroups: [string, Service[]][] =
+    groups.length ? groups : ([["Services", enriched?.services ?? []]] as [string, Service[]][]);
+  return renderGroups.map(([group, services]) => (
+))})()}
           <div key={group} className="rounded-xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
             <div className="px-4 py-2 text-xs uppercase tracking-wider text-neutral-400 border-b border-neutral-800 bg-neutral-900/60">{group}</div>
             <ul className="divide-y divide-neutral-800">
@@ -459,7 +463,7 @@ export default function StatusPage({ endpoint = "/api/status" }: { endpoint?: st
                   </div>
                 </li>
               ) : (
-                services.map((s) => (
+                services.map((s: Service) => (
                   <li key={s.id} className="py-3 px-4">
                     <div className="w-full flex justify-center">
                       <div className="min-w-0" style={{ width: "100%" }}>
@@ -546,7 +550,7 @@ export default function StatusPage({ endpoint = "/api/status" }: { endpoint?: st
 }
 
 // ---------- Dev-time sanity checks ----------
-if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+if (typeof window !== "undefined" && !import.meta.env.PROD) {
   (function runSanityTests() {
     // Test 1: normalizeHistory90 returns 90 values in [0,1]; also accepts 30 and expands
     const norm90 = normalizeHistory90(Array.from({ length: 90 }, () => Math.random()));
