@@ -221,9 +221,11 @@ function formatPct(n?: number) {
   return `${(n * 100).toFixed(n >= 0.999 ? 3 : 2)}%`;
 }
 
-function since(iso?: string) {
+// ✅ Robust against Date objects / bad strings
+function since(iso?: string | Date) {
   if (!iso) return "—";
-  const d = new Date(iso);
+  const d = iso instanceof Date ? new Date(iso.getTime()) : new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleString();
 }
 
@@ -381,9 +383,10 @@ function adaptWorkerPayload(worker: any): StatusPayload {
 }
 
 // ---------- Component ----------
-export default function StatusPage({
-  endpoint = "https://dasbenis-uptime.benjaminjanes5.workers.dev/api/status",
-}: { endpoint?: string }) {
+// ✅ Hard-point the API so parents/routes can’t override it with a relative path.
+const WORKER_API = "https://dasbenis-uptime.benjaminjanes5.workers.dev/api/status";
+
+export default function StatusPage() {
   const [data, setData] = useState<StatusPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -392,17 +395,17 @@ export default function StatusPage({
 
     async function load() {
       try {
-        const res = await fetch(endpoint, { cache: "no-store" });
+        const res = await fetch(WORKER_API, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const workerJson = await res.json();
         const adapted = adaptWorkerPayload(workerJson);
         if (!cancelled) setData(adapted);
         setError(null);
       } catch (e: any) {
-        // Fall back to demo data so the page still looks alive
         if (!cancelled) {
           setData(demoData);
           setError("Live status unavailable; showing demo data.");
+          console.error("Status fetch failed:", e);
         }
       }
     }
@@ -410,7 +413,7 @@ export default function StatusPage({
     load();
     const id = setInterval(load, 60_000);
     return () => { cancelled = true; clearInterval(id); };
-  }, [endpoint]);
+  }, []);
 
   // Back-compat & enrichment: prefer 90d fields, fall back from 30d if present; compute overall automatically
   const enriched = useMemo<StatusPayload | null>(() => {
@@ -584,7 +587,7 @@ export default function StatusPage({
         <div className="mx-auto max-w-5xl flex items-center justify-between text-xs text-neutral-500">
           <span>
             Status hosted at{" "}
-            <a href="https://status.dasbenis.com" className="underline hover:text-neutral-300">status.dasbenis.com</a>
+            <a href="https://status.dasbenis.com" className="underline hover-text-neutral-300">status.dasbenis.com</a>
           </span>
           <span className="flex items-center gap-1">
             <RefreshCcw className="h-3 w-3" /> Updated {since(enriched?.updatedAt)}
@@ -631,6 +634,10 @@ if (typeof window !== "undefined" && !import.meta.env.PROD) {
     ["Bots", "External APIs", "Platform", "Backend", "Other"].forEach((grp) => {
       const vnode = emptyGroupNote(grp as string);
       console.assert(!!vnode, `emptyGroupNote should return content for group: ${grp}`);
+
+      // Extra: ensure since() tolerates weird inputs
+      console.assert(since(undefined) === "—", "since(undefined) should be em dash");
+      console.assert(typeof since(new Date()) === "string", "since(Date) should return a string");
     });
 
     // Test 6: computeOverall excludes External APIs for banner
