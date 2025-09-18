@@ -388,30 +388,29 @@ export default function StatusPage({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-  let cancelled = false;
+    let cancelled = false;
 
-  async function load() {
-    try {
-      const res = await fetch(endpoint, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const workerJson = await res.json();
-      const adapted = adaptWorkerPayload(workerJson);
-      if (!cancelled) setData(adapted);
-      setError(null);
-    } catch (e: any) {
-      // Fall back to demo data so the page still looks alive
-      if (!cancelled) {
-        setData(demoData);
-        setError("Live status unavailable; showing demo data.");
+    async function load() {
+      try {
+        const res = await fetch(endpoint, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const workerJson = await res.json();
+        const adapted = adaptWorkerPayload(workerJson);
+        if (!cancelled) setData(adapted);
+        setError(null);
+      } catch (e: any) {
+        // Fall back to demo data so the page still looks alive
+        if (!cancelled) {
+          setData(demoData);
+          setError("Live status unavailable; showing demo data.");
+        }
       }
     }
-  }
 
-  load();
-  const id = setInterval(load, 60_000);
-  return () => { cancelled = true; clearInterval(id); };
-}, [endpoint]);
-
+    load();
+    const id = setInterval(load, 60_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [endpoint]);
 
   // Back-compat & enrichment: prefer 90d fields, fall back from 30d if present; compute overall automatically
   const enriched = useMemo<StatusPayload | null>(() => {
