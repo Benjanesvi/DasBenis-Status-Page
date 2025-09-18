@@ -346,30 +346,72 @@ function computeOverall(services: Service[]): StatusPayload["overall"] {
   return "up";
 }
 
+// --- Adapter: Cloudflare Worker → StatusPayload (this UI expects) ---
+function adaptWorkerPayload(worker: any): StatusPayload {
+  // Map Worker overall ("operational" | "degraded") to this UI's overall ("up" | "degraded" | "down")
+  const overallMap: Record<string, StatusPayload["overall"]> = {
+    operational: "up",
+    degraded: "degraded",
+    outage: "down",
+  };
+
+  const services: Service[] = (worker.items || []).map((it: any) => {
+    const status: Service["status"] =
+      it.ok === true ? "up" : it.ok === false ? "down" : "maintenance"; // unknown -> treat as maintenance/amber
+
+    return {
+      id: it.id,
+      name: (it.id || "").replace(/[-_]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()), // simple friendly name
+      url: it.url,
+      group: it.group || "Services",
+      description: undefined,
+      status,
+      lastCheckMs: typeof it.time === "number" ? it.time : undefined,
+      lastCheckedAt: it.at,
+      // leave uptime90d/history90 undefined so your existing UI renders defaults
+    };
+  });
+
+  return {
+    updatedAt: worker?.overall?.at || new Date().toISOString(),
+    overall: overallMap[worker?.overall?.overall] || "up",
+    services,
+    incidents: [], // your Worker doesn't emit incidents yet
+  };
+}
+
 // ---------- Component ----------
-export default function StatusPage({ endpoint = "/api/status" }: { endpoint?: string }) {
+export default function StatusPage({
+  endpoint = "https://dasbenis-uptime.benjaminjanes5.workers.dev/api/status",
+}: { endpoint?: string }) {
   const [data, setData] = useState<StatusPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const res = await fetch(endpoint, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = (await res.json()) as StatusPayload;
-        if (!cancelled) setData(json);
-      } catch (e: any) {
-        if (!cancelled) {
-          setData(demoData);
-          setError("Live status unavailable; showing demo data.");
-        }
+  let cancelled = false;
+
+  async function load() {
+    try {
+      const res = await fetch(endpoint, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const workerJson = await res.json();
+      const adapted = adaptWorkerPayload(workerJson);
+      if (!cancelled) setData(adapted);
+      setError(null);
+    } catch (e: any) {
+      // Fall back to demo data so the page still looks alive
+      if (!cancelled) {
+        setData(demoData);
+        setError("Live status unavailable; showing demo data.");
       }
     }
-    load();
-    const id = setInterval(load, 60_000);
-    return () => { cancelled = true; clearInterval(id); };
-  }, [endpoint]);
+  }
+
+  load();
+  const id = setInterval(load, 60_000);
+  return () => { cancelled = true; clearInterval(id); };
+}, [endpoint]);
+
 
   // Back-compat & enrichment: prefer 90d fields, fall back from 30d if present; compute overall automatically
   const enriched = useMemo<StatusPayload | null>(() => {
