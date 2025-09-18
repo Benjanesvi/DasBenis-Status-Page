@@ -1,5 +1,6 @@
 import StatusPage from "./StatusPage";
 
 export default function App() {
-  return <StatusPage endpoint="/api/status" />;
+  // No props. Let StatusPage call the Worker URL it has baked in.
+  return <StatusPage />;
 }
