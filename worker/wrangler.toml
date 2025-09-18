@@ -1,0 +1,11 @@
+name = "dasbenis-uptime"
+main = "src/index.ts"
+compatibility_date = "2025-09-17"
+
+[triggers]
+crons = ["*/5 * * * *"]   # every 5 minutes
+
+[[kv_namespaces]]
+binding = "STATUS_KV"
+id = "49acedcb36fc4fdc8e269aeab3b48560"
+preview_id = "7c3ccc6e396147b39e9d5882186e6aed"
