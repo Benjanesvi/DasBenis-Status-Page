@@ -227,7 +227,7 @@ function since(iso?: string) {
   return d.toLocaleString();
 }
 
-// ---------- 90‑day history with thresholds ----------
+// ---------- 90-day history with thresholds ----------
 function colorFromPct(p: number) {
   const pct = p * 100;
   if (pct >= 99.9) return "bg-emerald-500";
@@ -442,102 +442,107 @@ export default function StatusPage({ endpoint = "/api/status" }: { endpoint?: st
 
       {/* Components */}
       <main className="mx-auto max-w-5xl px-4 pb-20 space-y-8">
-        {error && <div className="text-amber-300 text-sm">{error}</div>}
+        {error && <div className="text-amber-300 text-sm">{error}</div)}
+
         {(() => {
-  const renderGroups: [string, Service[]][] =
-    groups.length ? groups : ([["Services", enriched?.services ?? []]] as [string, Service[]][]);
-  return renderGroups.map(([group, services]) => (
-))})()}
-          <div key={group} className="rounded-xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
-            <div className="px-4 py-2 text-xs uppercase tracking-wider text-neutral-400 border-b border-neutral-800 bg-neutral-900/60">{group}</div>
-            <ul className="divide-y divide-neutral-800">
-              {services.length === 0 ? (
-                <li className="py-6 px-4">
-                  <div className="w-full flex justify-center">
-                    <div className="min-w-0 text-center text-sm text-neutral-400" style={{ width: "100%" }}>
-                      {emptyGroupNote(group as string)}
-                      <div className="mt-2 text-xs text-neutral-500">
-                        If you expected items here, ensure your <code className="font-mono">/api/status</code> returns a non-empty <code className="font-mono">services</code> array with proper group labels.
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              ) : (
-                services.map((s: Service) => (
-                  <li key={s.id} className="py-3 px-4">
+          // Ensure TS sees a consistent tuple type, not (string | Service[])[]
+          const renderGroups: [string, Service[]][] =
+            groups.length
+              ? groups
+              : ([["Services", enriched?.services ?? []]] as [string, Service[]][]);
+
+          return renderGroups.map(([group, services]) => (
+            <div key={group} className="rounded-xl border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+              <div className="px-4 py-2 text-xs uppercase tracking-wider text-neutral-400 border-b border-neutral-800 bg-neutral-900/60">{group}</div>
+              <ul className="divide-y divide-neutral-800">
+                {services.length === 0 ? (
+                  <li className="py-6 px-4">
                     <div className="w-full flex justify-center">
-                      <div className="min-w-0" style={{ width: "100%" }}>
-                        {/* Header: name/link left, status pill right */}
-                        <div className="flex items-center gap-2 min-w-0">
-                          <h3 className="text-sm font-medium text-neutral-100 truncate">{s.name}</h3>
-                          {s.url && (
-                            <a
-                              href={s.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="shrink-0 text-neutral-400 hover:text-neutral-200"
-                              aria-label="Open link"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          )}
-                          <span className={`ml-auto inline-flex items-center gap-2 rounded-full border px-2 py-1 text-[11px] capitalize ${pillClasses(s.status)}`}>
-                            <Dot status={s.status} />
-                            {s.status}
-                          </span>
+                      <div className="min-w-0 text-center text-sm text-neutral-400" style={{ width: "100%" }}>
+                        {emptyGroupNote(group as string)}
+                        <div className="mt-2 text-xs text-neutral-500">
+                          If you expected items here, ensure your <code className="font-mono">/api/status</code> returns a non-empty <code className="font-mono">services</code> array with proper group labels.
                         </div>
-
-                        {s.description && <p className="mt-0.5 text-xs text-neutral-400">{s.description}</p>}
-
-                        {/* Metrics + 90-day bar (bar fills the entire box width) */}
-                        <div className="mt-2 space-y-2" style={{ width: "100%" }}>
-                          <div className="grid grid-cols-3 gap-3 text-[11px] text-neutral-400">
-                            <div>
-                              <div className="text-neutral-300">Uptime 90d</div>
-                              <div className="mt-0.5 font-mono text-neutral-200">{formatPct(s.uptime90d)}</div>
-                            </div>
-                            <div>
-                              <div className="text-neutral-300">Latency</div>
-                              <div className="mt-0.5 font-mono text-neutral-200">{s.lastCheckMs ? `${s.lastCheckMs} ms` : "—"}</div>
-                            </div>
-                            <div>
-                              <div className="text-neutral-300">Checked</div>
-                              <div className="mt-0.5 font-mono text-neutral-200">{since(s.lastCheckedAt)}</div>
-                            </div>
-                          </div>
-                          <HistoryBar history={s.history90 ?? s.history30} />
-                        </div>
-
-                        {(s.version || s.repoUpdatedAt) && (
-                          <div className="mt-2 text-[11px] text-neutral-400">
-                            {s.version && (
-                              <>
-                                Version <span className="font-mono text-neutral-300">{s.version}</span>
-                              </>
-                            )}
-                            {s.version && s.repoUpdatedAt && <span className="mx-2">•</span>}
-                            {s.repoUpdatedAt && (
-                              <>
-                                Repo updated <span className="font-mono text-neutral-300">{since(s.repoUpdatedAt)}</span>
-                              </>
-                            )}
-                          </div>
-                        )}
                       </div>
                     </div>
                   </li>
-                ))
-              )}
-            </ul>
-          </div>
-        ))}
+                ) : (
+                  services.map((s: Service) => (
+                    <li key={s.id} className="py-3 px-4">
+                      <div className="w-full flex justify-center">
+                        <div className="min-w-0" style={{ width: "100%" }}>
+                          {/* Header: name/link left, status pill right */}
+                          <div className="flex items-center gap-2 min-w-0">
+                            <h3 className="text-sm font-medium text-neutral-100 truncate">{s.name}</h3>
+                            {s.url && (
+                              <a
+                                href={s.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="shrink-0 text-neutral-400 hover:text-neutral-200"
+                                aria-label="Open link"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
+                            )}
+                            <span className={`ml-auto inline-flex items-center gap-2 rounded-full border px-2 py-1 text-[11px] capitalize ${pillClasses(s.status)}`}>
+                              <Dot status={s.status} />
+                              {s.status}
+                            </span>
+                          </div>
+
+                          {s.description && <p className="mt-0.5 text-xs text-neutral-400">{s.description}</p>}
+
+                          {/* Metrics + 90-day bar (bar fills the entire box width) */}
+                          <div className="mt-2 space-y-2" style={{ width: "100%" }}>
+                            <div className="grid grid-cols-3 gap-3 text-[11px] text-neutral-400">
+                              <div>
+                                <div className="text-neutral-300">Uptime 90d</div>
+                                <div className="mt-0.5 font-mono text-neutral-200">{formatPct(s.uptime90d)}</div>
+                              </div>
+                              <div>
+                                <div className="text-neutral-300">Latency</div>
+                                <div className="mt-0.5 font-mono text-neutral-200">{s.lastCheckMs ? `${s.lastCheckMs} ms` : "—"}</div>
+                              </div>
+                              <div>
+                                <div className="text-neutral-300">Checked</div>
+                                <div className="mt-0.5 font-mono text-neutral-200">{since(s.lastCheckedAt)}</div>
+                              </div>
+                            </div>
+                            <HistoryBar history={s.history90 ?? s.history30} />
+                          </div>
+
+                          {(s.version || s.repoUpdatedAt) && (
+                            <div className="mt-2 text-[11px] text-neutral-400">
+                              {s.version && (
+                                <>
+                                  Version <span className="font-mono text-neutral-300">{s.version}</span>
+                                </>
+                              )}
+                              {s.version && s.repoUpdatedAt && <span className="mx-2">•</span>}
+                              {s.repoUpdatedAt && (
+                                <>
+                                  Repo updated <span className="font-mono text-neutral-300">{since(s.repoUpdatedAt)}</span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          ));
+        })()}
       </main>
 
       {/* Footer */}
       <footer className="mt-14 border-t border-neutral-800 bg-neutral-900/50 py-6 px-4">
         <div className="mx-auto max-w-5xl flex items-center justify-between text-xs text-neutral-500">
           <span>
-            Status hosted at {" "}
+            Status hosted at{" "}
             <a href="https://status.dasbenis.com" className="underline hover:text-neutral-300">status.dasbenis.com</a>
           </span>
           <span className="flex items-center gap-1">
@@ -594,7 +599,7 @@ if (typeof window !== "undefined" && !import.meta.env.PROD) {
         { id: "b", name: "Discord API", group: "External APIs", status: "down" },
       ] as any;
       console.assert(computeOverall(sample) === "up", "Banner should ignore External APIs outages");
-      sample[0].status = "degraded" as any;
+      (sample[0] as any).status = "degraded";
       console.assert(computeOverall(sample) === "degraded", "Internal degraded should reflect in banner");
     })();
   })();
