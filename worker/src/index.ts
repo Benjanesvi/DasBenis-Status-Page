@@ -3,9 +3,21 @@ export interface Env {
 }
 
 // ---- CONFIG ----
+// These are the endpoints we'll ping for live status.
 const TARGETS = [
-  { id: "site", url: "https://dasbenis-status-page.pages.dev/", group: "Public" },
-  // { id: "api",  url: "https://your-api.example.com/health", group: "Backend" },
+  // Elite: Dangerous ecosystem
+  { id: "inara",            group: "APIs",      url: "https://inara.cz/inapi/v1/" },
+  { id: "elitebgs",         group: "APIs",      url: "https://elitebgs.app/api/ebgs/v5/factions" },
+  { id: "edsm",             group: "APIs",      url: "https://www.edsm.net/en/api-status-v1" },
+
+  // Your own resources
+  { id: "kael-bot-render",  group: "Render",    url: "https://cmdr-kael-status.onrender.com" },
+  { id: "github-cmdr-kael", group: "GitHub",    url: "https://github.com/Benjanesvi/CMDR-Kael-Bot" },
+  { id: "cloudflare-domain",group: "Cloudflare",url: "https://dasbenis.com" },
+  { id: "upstash-kael",     group: "Upstash",   url: "https://warm-hornet-64121.upstash.io" },
+
+  // (Optional) keep your public status page too
+  { id: "site",             group: "Public",    url: "https://dasbenis-status-page.pages.dev/" },
 ];
 
 const TIMEOUT_MS = 8000;
@@ -13,7 +25,7 @@ const FRESH_TTL = 300;
 
 // Central CORS headers (allow your Pages site or keep "*" while testing)
 const CORS = {
-  "access-control-allow-origin": "*",              // you can later set this to your Pages domain
+  "access-control-allow-origin": "*",              // later: set to your Pages domain for stricter CORS
   "access-control-allow-methods": "GET,POST,OPTIONS",
   "access-control-allow-headers": "content-type,authorization",
 };
