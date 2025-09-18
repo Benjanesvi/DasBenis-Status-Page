@@ -442,7 +442,7 @@ export default function StatusPage({ endpoint = "/api/status" }: { endpoint?: st
 
       {/* Components */}
       <main className="mx-auto max-w-5xl px-4 pb-20 space-y-8">
-        {error && <div className="text-amber-300 text-sm">{error}</div)}
+        {error && <div className="text-amber-300 text-sm">{error}</div>}
 
         {(() => {
           // Ensure TS sees a consistent tuple type, not (string | Service[])[]
